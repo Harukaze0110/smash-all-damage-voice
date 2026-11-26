@@ -8,9 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: always
-      CARGO_TERM_PROGRESS_WIDTH: 80
     steps:
       - uses: actions/checkout@v4
 
@@ -137,7 +134,7 @@ jobs:
         run: |
           rustup toolchain install nightly-2023-05-01 --component rust-src
           rustup default nightly-2023-05-01
-          cargo skyline build --release --verbose
+          cargo skyline build --release
 
       - name: Upload NRO
         uses: actions/upload-artifact@v4
