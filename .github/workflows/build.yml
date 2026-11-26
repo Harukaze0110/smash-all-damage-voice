@@ -131,9 +131,10 @@ jobs:
           cargo install cargo-skyline --locked
 
       - name: Build NRO
+        env:
+          RUST_LOG: info
         run: |
-          rustup toolchain install nightly-2023-05-01 --component rust-src
-          rustup default nightly-2023-05-01
+          cargo skyline update-std
           cargo skyline build --release
 
       - name: Upload NRO
