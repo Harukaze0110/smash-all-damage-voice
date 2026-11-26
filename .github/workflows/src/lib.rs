@@ -2,11 +2,11 @@
 use smashline::{
     *,
     api::*,
-    phx::Hash40,
 };
 use smashline::smash::{
     app::{lua_bind::*, utility},
     lib::lua_const::*,
+    phx::Hash40,
 };
 use smashline::smash_script::macros::*;
 
