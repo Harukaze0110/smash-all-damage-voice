@@ -10,30 +10,133 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: always
-      CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Cargo dependencies
+      - name: Generate Project Files
         run: |
+          rm -rf src Cargo.toml Cargo.lock rust-toolchain.toml
+          mkdir -p src
           HOST="github.com"
-          printf 'smash = { git = "https://%s/WuBoytH/smash-rs.git" }\n' "$HOST" >> Cargo.toml
-          printf 'smash_script = { git = "https://%s/WuBoytH/smash-script.git", branch = "development" }\n' "$HOST" >> Cargo.toml
-          printf 'smashline = { git = "https://%s/HDR-Development/smashline.git", tag = "v2.0.0" }\n' "$HOST" >> Cargo.toml
-          printf '\n[profile.dev]\npanic = "abort"\n\n[profile.release]\npanic = "abort"\n' >> Cargo.toml
+
+          cat << EOF > Cargo.toml
+          [package]
+          name = "smash_damage_voice"
+          version = "0.1.0"
+          edition = "2021"
+
+          [package.metadata.skyline]
+          titleid = "01006A800016E000"
+
+          [lib]
+          crate-type = ["cdylib"]
+
+          [dependencies]
+          skyline = { git = "https://${HOST}/ultimate-research/skyline-rs.git" }
+          smashline = { git = "https://${HOST}/HDR-Development/smashline.git", tag = "v2.0.0" }
+
+          [profile.dev]
+          panic = "abort"
+
+          [profile.release]
+          panic = "abort"
+          EOF
+
+          cat << 'EOF' > src/lib.rs
+          #![feature(concat_idents, proc_macro_hygiene)]
+          use smashline::*;
+          use smashline::smash::{
+              app::lua_bind::*,
+              lib::lua_const::*,
+              lua2cpp::L2CFighterCommon,
+              phx::Hash40,
+          };
+          use smashline::smash_script::macros::*;
+
+          static mut PREV_DAMAGE: [f32; 8] = [0.0; 8];
+
+          unsafe extern "C" fn common_damage_voice_frame(fighter: &mut L2CFighterCommon, voice_name: &str) {
+              let entry_id = WorkModule::get_int(fighter.module_accessor, *FIGHTER_INSTANCE_WORK_ID_INT_ENTRY_ID) as usize;
+              if entry_id >= 8 {
+                  return;
+              }
+
+              let current_damage = DamageModule::damage(fighter.module_accessor, 0);
+
+              if current_damage > PREV_DAMAGE[entry_id] {
+                  PLAY_SE(fighter, Hash40::new(voice_name));
+              }
+
+              PREV_DAMAGE[entry_id] = current_damage;
+          }
+
+          macro_rules! register_fighter_voice {
+              ($($name:literal => $fn_name:ident),* $(,)?) => {
+                  $(
+                      unsafe extern "C" fn $fn_name(fighter: &mut L2CFighterCommon) {
+                          common_damage_voice_frame(fighter, concat!("vc_", $name, "_damage01"));
+                      }
+                  )*
+                  pub fn install_all() {
+                      $(
+                          Agent::new($name)
+                              .on_line(Main, $fn_name)
+                              .install();
+                      )*
+                  }
+              };
+          }
+
+          register_fighter_voice!(
+              "mario" => frame_mario, "donkey" => frame_donkey, "link" => frame_link,
+              "samus" => frame_samus, "samusd" => frame_samusd, "yoshi" => frame_yoshi,
+              "kirby" => frame_kirby, "fox" => frame_fox, "pikachu" => frame_pikachu,
+              "luigi" => frame_luigi, "ness" => frame_ness, "captain" => frame_captain,
+              "purin" => frame_purin, "peach" => frame_peach, "daisy" => frame_daisy,
+              "koopa" => frame_koopa, "popo" => frame_popo, "nana" => frame_nana,
+              "sheik" => frame_sheik, "zelda" => frame_zelda, "mariod" => frame_mariod,
+              "pichu" => frame_pichu, "falco" => frame_falco, "marth" => frame_marth,
+              "lucina" => frame_lucina, "younglink" => frame_younglink, "ganon" => frame_ganon,
+              "mewtwo" => frame_mewtwo, "roy" => frame_roy, "chrom" => frame_chrom,
+              "gamewatch" => frame_gamewatch, "metaknight" => frame_metaknight, "pit" => frame_pit,
+              "pitb" => frame_pitb, "szerosuit" => frame_szerosuit, "wario" => frame_wario,
+              "snake" => frame_snake, "ike" => frame_ike, "pzenigame" => frame_pzenigame,
+              "pfushigisou" => frame_pfushigisou, "plizardon" => frame_plizardon, "diddy" => frame_diddy,
+              "lucas" => frame_lucas, "sonic" => frame_sonic, "dedede" => frame_dedede,
+              "pikmin" => frame_pikmin, "lucario" => frame_lucario, "robot" => frame_robot,
+              "toonlink" => frame_toonlink, "wolf" => frame_wolf, "murabito" => frame_murabito,
+              "rockman" => frame_rockman, "wiifit" => frame_wiifit, "rosetta" => frame_rosetta,
+              "littlemac" => frame_littlemac, "gekkouga" => frame_gekkouga,
+              "miifighter" => frame_miifighter, "miiswordsman" => frame_miiswordsman, "miigunner" => frame_miigunner,
+              "palutena" => frame_palutena, "pacman" => frame_pacman, "reflet" => frame_reflet,
+              "shulk" => frame_shulk, "koopajr" => frame_koopajr, "duckhunt" => frame_duckhunt,
+              "ryu" => frame_ryu, "ken" => frame_ken, "cloud" => frame_cloud,
+              "kamui" => frame_kamui, "bayonetta" => frame_bayonetta, "inkling" => frame_inkling,
+              "ridley" => frame_ridley, "simon" => frame_simon, "richter" => frame_richter,
+              "krool" => frame_krool, "shizue" => frame_shizue, "gaogaen" => frame_gaogaen,
+              "packun" => frame_packun, "jack" => frame_jack, "brave" => frame_brave,
+              "buddy" => frame_buddy, "dolly" => frame_dolly, "master" => frame_master,
+              "tantan" => frame_tantan, "pickel" => frame_pickel, "edge" => frame_edge,
+              "eflame" => frame_eflame, "elight" => frame_elight, "demon" => frame_demon,
+              "trail" => frame_trail
+          );
+
+          #[skyline::main(name = "smash_damage_voice")]
+          pub fn main() {
+              install_all();
+          }
+          EOF
 
       - name: Install cargo-skyline
         run: |
-          rustup toolchain install stable
-          rustup override set stable
+          rustup default stable
           cargo install cargo-skyline --locked
-          rustup override unset
-
-      - name: Setup Skyline std
-        run: yes | cargo skyline update-std
 
       - name: Build NRO
-        run: cargo skyline build --release --verbose
+        run: |
+          rustup toolchain install nightly-2023-05-01 --component rust-src
+          rustup default nightly-2023-05-01
+          cargo skyline build --release --verbose
 
       - name: Upload NRO
         uses: actions/upload-artifact@v4
