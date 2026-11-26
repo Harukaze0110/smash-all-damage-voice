@@ -8,24 +8,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: always
+      CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Cargo dependencies
         run: |
           HOST="github.com"
-          REPO="HDR-Development/smashline.git"
-          printf 'smashline = { git = "https://%s/%s", tag = "v2.0.0" }\n' "$HOST" "$REPO" >> Cargo.toml
+          printf 'smash = { git = "https://%s/WuBoytH/smash-rs.git" }\n' "$HOST" >> Cargo.toml
+          printf 'smash_script = { git = "https://%s/WuBoytH/smash-script.git", branch = "development" }\n' "$HOST" >> Cargo.toml
+          printf 'smashline = { git = "https://%s/HDR-Development/smashline.git", tag = "v2.0.0" }\n' "$HOST" >> Cargo.toml
+          printf '\n[profile.dev]\npanic = "abort"\n\n[profile.release]\npanic = "abort"\n' >> Cargo.toml
 
-      - name: Install cargo-skyline using latest stable Cargo
+      - name: Install cargo-skyline
         run: |
           rustup toolchain install stable
           rustup override set stable
-          cargo install cargo-skyline
+          cargo install cargo-skyline --locked
           rustup override unset
 
+      - name: Setup Skyline std
+        run: yes | cargo skyline update-std
+
       - name: Build NRO
-        run: yes | cargo skyline build --release
+        run: cargo skyline build --release --verbose
 
       - name: Upload NRO
         uses: actions/upload-artifact@v4
