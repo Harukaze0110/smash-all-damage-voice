@@ -17,13 +17,12 @@ jobs:
           REPO="HDR-Development/smashline.git"
           printf 'smashline = { git = "https://%s/%s", tag = "v2.0.0" }\n' "$HOST" "$REPO" >> Cargo.toml
 
-      - name: Install prebuilt cargo-skyline
+      - name: Install cargo-skyline using latest stable Cargo
         run: |
-          HOST="github.com"
-          PATH_BIN="skyline-rs/cargo-skyline/releases/download/v3.5.0/cargo-skyline-x86_64-unknown-linux-gnu.tar.gz"
-          curl -L "https://${HOST}/${PATH_BIN}" | tar -xz
-          chmod +x cargo-skyline
-          sudo mv cargo-skyline /usr/local/bin/
+          rustup toolchain install stable
+          rustup override set stable
+          cargo install cargo-skyline
+          rustup override unset
 
       - name: Build NRO
         run: cargo skyline build --release
