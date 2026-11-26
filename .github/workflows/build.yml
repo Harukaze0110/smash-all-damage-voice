@@ -25,7 +25,7 @@ jobs:
           rustup override unset
 
       - name: Build NRO
-        run: cargo skyline build --release
+        run: yes | cargo skyline build --release
 
       - name: Upload NRO
         uses: actions/upload-artifact@v4
