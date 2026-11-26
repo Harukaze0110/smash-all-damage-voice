@@ -1,14 +1,11 @@
 #![feature(concat_idents, proc_macro_hygiene)]
-use smashline::{
-    *,
-    api::*,
-};
-use smashline::smash::{
+use smash::{
     app::{lua_bind::*, utility},
     lib::lua_const::*,
     phx::Hash40,
 };
-use smashline::smash_script::macros::*;
+use smash_script::macros::*;
+use smashline::*;
 
 static mut PREV_DAMAGE: [f32; 8] = [0.0; 8];
 
