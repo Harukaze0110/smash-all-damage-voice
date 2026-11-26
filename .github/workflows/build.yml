@@ -1,0 +1,30 @@
+name: Build NRO
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Cargo dependencies
+        run: |
+          HOST="github.com"
+          REPO="HDR-Development/smashline.git"
+          printf 'smashline = { git = "https://%s/%s", tag = "v2.0.0" }\n' "$HOST" "$REPO" >> Cargo.toml
+
+      - name: Install cargo-skyline
+        run: cargo install cargo-skyline
+
+      - name: Build NRO
+        run: cargo skyline build --release
+
+      - name: Upload NRO
+        uses: actions/upload-artifact@v4
+        with:
+          name: smash_damage_voice
+          path: target/aarch64-skyline-switch/release/*.nro
